@@ -2,9 +2,13 @@ using EventStore.Client;
 using EventStore.PersistentSubscriptions.Demo.Event.CaseCreated;
 using EventStore.PersistentSubscriptions.Demo.EventStore.BackgroundService;
 using EventStore.PersistentSubscriptions.Demo.EventStore.DependicyInjection;
+using EventStore.PersistentSubscriptions.Demo.EventStore.PersistentSubscriptionManager;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
@@ -32,7 +36,13 @@ builder.Services.AddSingleton<EventStorePersistentSubscriptionsClient>(sp =>
     settings.ConnectivitySettings.DiscoveryInterval = TimeSpan.FromSeconds(10);
     return new EventStorePersistentSubscriptionsClient(settings);
 });
-builder.Services.AddHostedService<EventStoreBackgroundService>();
+// builder.Services.AddHostedService<EventStoreBackgroundService>();
+
+builder.Services.AddSingleton<IPersistentSubscriptionManager, PersistentSubscriptionManager>();
+builder.Services.AddHostedService<PersistentSubscriptionManagerBackgroundService>();
 
 var app = builder.Build();
+app.UseSwagger();
+app.UseSwaggerUI();
+app.MapControllers();
 app.Run();

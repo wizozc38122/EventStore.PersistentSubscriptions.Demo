@@ -51,3 +51,42 @@ public async Task StartAsync(CancellationToken cancellationToken)
     await PersistentSubscribeAsync("$et-CaseCreated::QinGroup", cancellationToken);
 }
 ```
+
+## PersistentSubscriptionManager
+
+額外多做非必要~ 
+
+將過程封裝到 `PersistentSubscriptionManager` 持久訂閱管理器
+
+於 `PersistentSubscriptionManagerBackgroundService` 內使用
+
+每個訂閱都能獨立管控有自己的 `CancellationToken` ，開出介面後由 API 引用就能動態調整
+
+**添加預設**
+```csharp
+await persistentSubscriptionManager.SubscribeAsync("$et-CaseCreated", "QinGroup");
+```
+
+**API動態調整**
+
+```csharp
+[HttpGet]
+public IActionResult Get()
+{
+	return Ok(persistentSubscriptionManager.GetSubscriptions());
+}
+
+[HttpPost]
+public IActionResult Post(string streamName, string groupName)
+{
+	persistentSubscriptionManager.SubscribeAsync(streamName, groupName);
+	return Ok();
+}
+
+[HttpDelete]
+public IActionResult Delete(string streamName, string groupName)
+{
+	persistentSubscriptionManager.Unsubscribe(streamName, groupName);
+	return Ok();
+}
+```
